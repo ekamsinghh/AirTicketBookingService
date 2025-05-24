@@ -2,7 +2,7 @@ const { StatusCodes }=require("http-status-codes");
 
 class ServiceError extends Error{
     constructor(
-        message="Something Went Wrong",
+        message="Service Layer Error",
         explanation="Please Try Again",
         statusCode=StatusCodes.INTERNAL_SERVER_ERROR
     ){

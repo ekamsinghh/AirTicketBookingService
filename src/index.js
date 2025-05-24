@@ -1,5 +1,5 @@
 const express = require("express");
-const { PORT , DB_SYNC } = require("./config/server-config");
+const { PORT , DB_SYNC , FLIGHT_SERVICE_PATH } = require("./config/server-config");
 const apiRoutes = require("./routes/index");
 const db=require("./models/index");
 const app = express();
@@ -17,6 +17,7 @@ const startingAndSettingServer= ()=>{
     if(DB_SYNC){
         db.sequelize.sync({alter:true});
     }
+
 
 }
 

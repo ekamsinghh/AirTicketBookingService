@@ -40,6 +40,56 @@ class BookingService{
         }
     }
 
+    async updateBooking(bookingId,data){
+        try{
+            const newSeats=data.noOfSeats;
+            const booking=await this.bookingrepository.getById(bookingId);
+            const prevBookedSeats=booking.noOfSeats;
+            const flightId=booking.flightid;
+            if(newSeats>prevBookedSeats){
+                const reqSeats=newSeats-prevBookedSeats;
+                let getFlightRequestUrl=`${FLIGHT_SERVICE_PATH}/api/v1/flights/${flightId}`;
+                const flight=await axios.get(getFlightRequestUrl);
+                let flightData=flight.data.data;
+                let priceOfFlight= flightData.price;
+                if(reqSeats > flightData.totalSeats){
+                    throw new ServiceError('Something Went wrong',
+                        'Not enough seats available on this flight');
+                }
+                let newTotalCost=booking.totalCost+(reqSeats*priceOfFlight);
+                await this.bookingrepository.updating(bookingId,{noOfSeats:newSeats,totalCost:newTotalCost});
+                let updateFlightRequestUrl=`${FLIGHT_SERVICE_PATH}/api/v1/flights/${flightId}`;
+                await axios.patch(updateFlightRequestUrl,{totalSeats : flightData.totalSeats - reqSeats});
+            }
+            else{
+                const reqSeats=prevBookedSeats-newSeats;
+                let getFlightRequestUrl=`${FLIGHT_SERVICE_PATH}/api/v1/flights/${flightId}`;
+                const flight=await axios.get(getFlightRequestUrl);
+                let flightData=flight.data.data;
+                let priceOfFlight= flightData.price;
+                let newTotalCost=booking.totalCost-(reqSeats*priceOfFlight);
+                if(newSeats==0){
+                    await this.bookingrepository.updating(bookingId,{status:"Cancelled"});
+                    let updateFlightRequestUrl=`${FLIGHT_SERVICE_PATH}/api/v1/flights/${flightId}`;
+                    await axios.patch(updateFlightRequestUrl,{totalSeats : flightData.totalSeats + reqSeats});
+                }
+                else{
+                    await this.bookingrepository.updating(bookingId,{noOfSeats:newSeats,totalCost:newTotalCost});
+                    let updateFlightRequestUrl=`${FLIGHT_SERVICE_PATH}/api/v1/flights/${flightId}`;
+                    await axios.patch(updateFlightRequestUrl,{totalSeats : flightData.totalSeats + reqSeats});
+                }
+            }
+            return true;
+        }
+        catch(error){
+            console.log(error);
+            if(error.name=="RepositoryError" || error.name=="ValidationError"){
+                throw error;
+            }
+            throw new ServiceError();
+        }
+    }
+
 }
 
 module.exports = BookingService;

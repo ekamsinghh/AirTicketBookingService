@@ -35,7 +35,7 @@ class BookingRepository{
             }
             await booking.save();
             return booking;
-        } catch (error) {
+        }catch (error) {
             throw new AppError(
                 'RepositoryError', 
                 'Cannot update Booking', 
@@ -44,6 +44,38 @@ class BookingRepository{
         }
     }
 
+    async updating(bookingId, data) {
+        try {
+            await Booking.update(data,
+                {
+                    where: {
+                        id: bookingId
+                    }
+                }
+            );
+            return true;
+        }catch (error) {
+            throw new AppError(
+                'RepositoryError', 
+                'Cannot update Booking', 
+                'There was some issue updating the booking, please try again later',
+                StatusCodes.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    async getById(bookingId){
+        try{
+            const booking=await Booking.findByPk(bookingId);
+            return booking;
+        }
+        catch(error){
+            throw new AppError(
+                'RepositoryError', 
+                `Cannot Get the Booking with bookingId: ${bookingId} `, 
+                'There was some issue fetching the booking, please try again later',
+                StatusCodes.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
 
 module.exports=BookingRepository;
